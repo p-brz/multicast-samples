@@ -1,0 +1,12 @@
+# Waf
+.lock-waf*
+.waf-*
+build/
+*.pyc
+
+# Qt creator
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes

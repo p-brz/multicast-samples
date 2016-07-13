@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+def build(bld):
+    examples = [
+        ('iflist', 'list_interfaces.cpp'),
+        ('mclient', 'multicast-client.cpp'),
+        ('mquery','multicast-sender_receiver.cpp'),
+        ('mcast','multicast-server-mcast.cpp'),
+        ('mserver', 'multicast-server.cpp'),
+        ('showip', 'showip.cpp')
+    ]
+
+    for e in examples:
+        bld.program(
+            target = e[0],
+            source = e[1],
+            includes = '.'
+        )

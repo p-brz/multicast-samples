@@ -51,43 +51,4 @@ int joinMulticast(int sock, const char * address, const char * port, int sockTyp
     return joined;
 }
 
-int joinMulticast(struct sockaddr_in & serv, int sock)
-{
-
-//  //using IP_ADD_MEMBERSHIP
-//  struct ip_mreq multicast;
-//  bzero(&multicast, sizeof(multicast));
-//  if (inet_pton(AF_INET, "172.173.1.1", &multicast.imr_interface) != 1)
-//  {
-//      cout << "inet_pton failed" << endl;
-//      return 1;
-//  }
-//  if (inet_pton(AF_INET, "224.0.0.88", &multicast.imr_multiaddr) != 1)
-//  {
-//      cout << "inet_pton failed" << endl;
-//      return 1;
-//  }
-//  ret = setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &multicast, sizeof(multicast));
-//  if (-1 == ret)
-//  {
-//      perror("setsockopt");
-//      return errno;
-//  }
-
-    //using MCAST_JOIN_GROUP
-    struct group_req multicast;
-    bzero(&multicast, sizeof(multicast));
-//    multicast.gr_interface = if_nametoindex("eth0");
-    multicast.gr_interface = 0;
-    memcpy(&multicast.gr_group, &serv, sizeof(serv));
-    int ret = setsockopt(sock, IPPROTO_IP, MCAST_JOIN_GROUP, &multicast, sizeof(multicast));
-    if (-1 == ret)
-    {
-        perror("setsockopt init to MCAST_JOIN_GROUP");
-        return errno;
-    }
-
-    return 0;
-}
-
 #endif // MULTICAST_JOIN_H

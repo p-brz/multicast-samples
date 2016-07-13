@@ -3,11 +3,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <net/if.h>
+#include <stdlib.h>
 
 #include <iostream>
+#include <string>
 
 #include "multicast_common.h"
 #include "multicast_join.h"
+
+#define IPV4_MULTI_ADDR "224.0.0.88"
+#define IPV6_MULTI_ADDR "ff02::01"
 
 using namespace std;
 
@@ -51,38 +56,55 @@ int readMessages(int sock){
     return 0;
 }
 
+void bindSocket(int sock, int port, const std::string & address=""){
+    const std::string portStr = std::to_string(port);
+    const char  * addrStr = !address.empty() ? address.c_str() : NULL;
+
+    addrinfo * addr = getAddress(NULL, portStr.c_str(), SOCK_DGRAM, AF_INET6);
+
+    int ret = bind(sock, addr->ai_addr, addr->ai_addrlen);
+    if (-1 == ret){
+        perror("bind");
+        exit(errno);
+    }
+}
+
+void checkError(int retValue, const char* message){
+    if (retValue == -1){
+        perror(message);
+        exit(errno);
+    }
+}
+
+int buildSocket(int family = AF_INET6){
+    int sock = socket(family, SOCK_DGRAM, 0);
+    checkError(sock, "socket");
+
+    int reuse = true;
+    checkError(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)), "reuse addr");
+
+
+    return sock;
+}
+
 int main()
 {
-//    int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    int sock = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (-1 == sock)
-    {
-        perror("socket");
-        return errno;
-    }
+    int sock = buildSocket();
+
+    printf("build socket\n");
 
     sockaddr_storage mcast_addr;
-    int joined = joinMulticast(sock, "224.0.0.88", "8888", SOCK_DGRAM, 0, &mcast_addr);
-    int joined2 = joinMulticast(sock, "ff02::01", "8888", SOCK_DGRAM, 0, &mcast_addr);
+    int joined = joinMulticast(sock, IPV4_MULTI_ADDR, "8888", SOCK_DGRAM, 0, &mcast_addr);
+    int joined2 = joinMulticast(sock, IPV6_MULTI_ADDR, "8888", SOCK_DGRAM, 0, &mcast_addr);
     if(joined != 0 || joined2 != 0){
         return joined;
     }
 
-//    int ret = bind(sock, (sockaddr *)&serv, sizeof(serv));
+    printf("joined multicast addresses\n");
 
-    addrinfo * addr = getAddress(NULL, "8888", SOCK_DGRAM, AF_INET6);
+    bindSocket(sock, 8888);
 
-    char buffer[INET_ADDRSTRLEN];
-    for(addrinfo * p = addr; p != NULL; p = p->ai_next){
-        printf("Addr: %s\n", get_ip_str(p->ai_addr, buffer, INET6_ADDRSTRLEN));
-    }
-
-    int ret = bind(sock, addr->ai_addr, addr->ai_addrlen);
-    if (-1 == ret)
-    {
-        perror("bind");
-        return errno;
-    }
+    printf("bound socket\n");
 
     return readMessages(sock);
 }
